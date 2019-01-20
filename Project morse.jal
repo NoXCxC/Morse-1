@@ -1,0 +1,1411 @@
+include 16f887                      -- target PICmicro
+
+
+pragma target clock 20_000_000
+
+pragma target OSC      HS
+pragma target WDT      CONTROL
+pragma target DEBUG    DISABLED
+pragma target BROWNOUT DISABLED
+pragma target FCMEN    DISABLED
+pragma target IESO     DISABLED
+pragma target LVP      DISABLED
+pragma target MCLR     EXTERNAL
+
+
+WDTCON_SWDTEN = OFF
+OSCCON_SCS = 0
+
+enable_digital_io()
+
+alias   led0      is pin_B0
+pin_B0_direction =  output
+alias S0        is pin_C0
+pin_C0_direction = input
+alias S1        is pin_C1
+pin_C1_direction = input
+alias S2         is pin_C2
+pin_C2_direction =  input
+
+--------------------------------------------------------------------------------
+
+const byte LCD_ROWS    =  4           -- LCD with 4 lines
+const byte LCD_CHARS   =  20          -- and 20 characters per line
+
+alias     lcd_en       is pin_D4      -- data trigger
+alias     lcd_rs       is pin_D5      -- command/data select.
+
+pin_D4_direction       = output
+pin_D5_direction       = output
+
+alias     lcd_d4       is pin_D0
+alias     lcd_d5       is pin_D1
+alias     lcd_d6       is pin_D2
+alias     lcd_d7       is pin_D3
+
+pin_D0_direction       = output
+pin_D1_direction       = output
+pin_D2_direction       = output
+pin_D3_direction       = output
+
+include lcd_hd44780_4
+
+lcd_init()                            -- init the lcd controller
+
+--------------------------------------------------------------------------------
+
+include delay                         -- delay library
+include print                         -- print library
+include format                        -- format library
+
+const byte str1[]= "Morse System V3.0"
+const byte str2[]= "A"
+const byte str3[]= "B"
+const byte str4[]= "C"
+const byte str5[]= "D"
+const byte str6[]= "E"
+const byte str7[]= "F"
+const byte str8[]= "G"
+const byte str9[]= "H"
+const byte str10[]= "I"
+const byte str11[]= "J"
+const byte str12[]= "K"
+const byte str13[]= "L"
+const byte str14[]= "M"
+const byte str15[]= "N"
+const byte str16[]= "O"
+const byte str17[]= "P"
+const byte str18[]= "Q"
+const byte str19[]= "R"
+const byte str20[]= "S"
+const byte str21[]= "T"
+const byte str22[]= "U"
+const byte str23[]= "V"
+const byte str24[]= "W"
+const byte str25[]= "X"
+const byte str26[]= "Y"
+const byte str27[]= "Z"
+const byte str28[]= "1"
+const byte str29[]= "2"
+const byte str30[]= "3"
+const byte str31[]= "4"
+const byte str32[]= "5"
+const byte str33[]= "6"
+const byte str34[]= "7"
+const byte str35[]= "8"
+const byte str36[]= "9"
+const byte str37[]= "0"
+const byte str38[]= " "
+
+lcd_clear_screen()
+
+const byte start = 1
+const byte command = 2
+const byte E = 3
+const byte T = 4
+const byte I = 5
+const byte S = 6
+const byte H = 7
+const byte CINQ = 8
+const byte QUATRE = 9
+const byte V = 10
+const byte TROIS = 11
+const byte U = 12
+const byte F1 = 13
+const byte DEUX = 14
+const byte A = 15
+const byte R = 16
+const byte L = 17
+const byte W1 = 18
+const byte P = 19
+const byte J = 20
+const byte UN = 21
+const byte N = 22
+const byte D = 23
+const byte B = 24
+const byte SIX = 25
+const byte X = 26
+const byte K = 27
+const byte C = 28
+const byte Y = 29
+const byte M = 30
+const byte G = 31
+const byte Z = 32
+const byte SEPT = 33
+const byte Q = 34
+const byte O = 35
+const byte HUIT = 36
+const byte NEUF = 37
+const byte ZERO = 38
+const byte releasestart = 39
+const byte TRANS = 40
+const byte stop = 41
+var byte state = 0
+var word tempo = 0
+var byte MEM = 0
+
+
+state = start
+
+forever loop
+
+case state of
+
+start : block
+
+      lcd_clear_screen()
+      lcd_cursor_position(0,0)
+      print_string(lcd, str1)
+      
+      while state == start loop
+      
+      delay_1ms (1)
+      tempo = tempo + 1
+
+      if tempo == 3_000  then
+
+      tempo = 0
+      
+      exit loop
+      
+      end if
+      
+      end loop
+      
+      lcd_clear_screen()
+      state = command
+
+   end block
+   
+stop : block
+
+         tempo = 0
+         MEM = 0
+         lcd_clear_screen()
+         state = command
+         
+   end block
+
+releasestart : block
+
+         tempo = 0
+         MEM = MEM +1
+         while s0 == 1 loop
+
+         delay_1ms (1)
+         tempo = tempo + 1
+         
+         if tempo == 3_500 then
+
+         lcd_cursor_position(0,MEM)
+         print_string(lcd, str38)
+         MEM = MEM +1
+         exit loop
+         
+         elsif s1 == 0  then
+         
+         exit loop
+
+         end if
+
+         end loop
+
+         if s1 == 0 then
+         
+         state = stop
+
+         elsif s1 == 1 then
+         
+         state = command
+         
+         end if
+         
+
+      end block
+
+command : block
+
+       tempo = 0
+       
+       if s1 == 0 then
+       
+       state = stop
+       
+       end if
+       
+       while s0 == 0 loop
+       
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if s0 == 1 & tempo > 500 then
+       
+
+       tempo = 0
+       state = T
+
+       elsif s0 == 1 & tempo < 500 then
+       
+
+       tempo = 0
+       state = E
+       
+       end if
+       
+       end loop
+       
+    end block
+    
+E : block
+
+       while s0 == 1  loop
+       
+       delay_1ms (1)
+       tempo = tempo + 1
+       
+       if tempo > 1_500 then
+       
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str6)
+
+       exit loop
+
+       elsif s0 == 0 then
+       
+       exit loop
+
+       end if
+       
+       end loop
+       
+       if s0 == 1 then
+
+       tempo = 0
+       state = releasestart
+
+       end if
+
+       while s0 == 0 loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if s0 == 1 & tempo > 500 then
+
+       tempo = 0
+       state = A
+
+       elsif s0 == 1 & tempo < 500 then
+
+       tempo = 0
+       state = I
+
+       end if
+
+       end loop
+       
+       end block
+       
+I : block
+
+       while s0 == 1  loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if tempo > 1_500 then
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str10)
+
+       exit loop
+
+       elsif s0 == 0 then
+
+       exit loop
+
+       end if
+
+       end loop
+       
+       if s0 == 1 then
+       
+       tempo = 0
+       state = releasestart
+       
+       end if
+
+       while s0 == 0 loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if s0 == 1 & tempo > 500 then
+
+       tempo = 0
+       state = U
+
+       elsif s0 == 1 & tempo < 500 then
+
+       tempo = 0
+       state = S
+
+       end if
+
+       end loop
+
+       end block
+
+S : block
+
+       while s0 == 1  loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if tempo > 1_500 then
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str20)
+
+       exit loop
+
+       elsif s0 == 0 then
+
+       exit loop
+
+       end if
+
+       end loop
+
+       if s0 == 1 then
+
+       tempo = 0
+       state = releasestart
+
+       end if
+
+       while s0 == 0 loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if s0 == 1 & tempo > 500 then
+
+       tempo = 0
+       state = V
+
+       elsif s0 == 1 & tempo < 500 then
+
+       tempo = 0
+       state = H
+
+       end if
+
+       end loop
+
+       end block
+
+H : block
+
+       while s0 == 1  loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if tempo > 1_500 then
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str9)
+
+       exit loop
+
+       elsif s0 == 0 then
+
+       exit loop
+
+       end if
+
+       end loop
+       
+       if s0 == 1 then
+
+       tempo = 0
+       state = releasestart
+
+       end if
+
+       while s0 == 0 loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if s0 == 1 & tempo > 500 then
+
+       tempo = 0
+       state = QUATRE
+
+       elsif s0 == 1 & tempo < 500 then
+
+       tempo = 0
+       state = CINQ
+
+       end if
+
+       end loop
+
+       end block
+       
+QUATRE : block
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str31)
+       
+       state = releasestart
+       
+       end block
+       
+CINQ : block
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str32)
+
+       state = releasestart
+       
+       end block
+       
+V : block
+
+       while s0 == 1  loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if tempo > 1_500 then
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str23)
+
+       exit loop
+
+       elsif s0 == 0 then
+
+       exit loop
+
+       end if
+
+       end loop
+       
+       if s0 == 1 then
+
+       tempo = 0
+       state = releasestart
+
+       end if
+
+       while s0 == 0 loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if s0 == 1 & tempo > 500 then
+
+       tempo = 0
+       state = TROIS
+
+       end if
+
+       end loop
+
+       end block
+
+TROIS : block
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str30)
+       state = releasestart
+
+       end block
+       
+U : block
+
+       while s0 == 1  loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if tempo > 1_500 then
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str22)
+
+       exit loop
+
+       elsif s0 == 0 then
+
+       exit loop
+
+       end if
+
+       end loop
+       
+       if s0 == 1 then
+
+       tempo = 0
+       state = releasestart
+
+       end if
+
+       while s0 == 0 loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if s0 == 1 & tempo > 500 then
+
+       tempo = 0
+       state = DEUX
+
+       elsif s0 == 1 & tempo < 500 then
+
+       tempo = 0
+       state = F
+
+       end if
+
+       end loop
+
+       end block
+       
+F1 : block
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str7)
+       state = releasestart
+
+       end block
+       
+DEUX : block
+
+       while s0 == 1 loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if s0 == 1 & tempo > 500 then
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str29)
+
+       exit loop
+       
+       elsif tempo > 1_500 then
+       
+       exit loop
+
+       end if
+       
+       end loop
+
+       state = releasestart
+       
+       end block
+       
+
+A : block
+
+       while s0 == 1  loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if tempo > 1_500 then
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str2)
+
+       exit loop
+
+       elsif s0 == 0 then
+
+       exit loop
+
+       end if
+
+       end loop
+       
+       if s0 == 1 then
+
+       tempo = 0
+       state = releasestart
+
+       end if
+
+       while s0 == 0 loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if s0 == 1 & tempo > 500 then
+
+       tempo = 0
+       state = W
+
+       elsif s0 == 1 & tempo < 500 then
+
+       tempo = 0
+       state = R
+
+       end if
+
+       end loop
+
+       end block
+       
+R : block
+
+       while s0 == 1  loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if tempo > 1_500 then
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str19)
+
+       exit loop
+
+       elsif s0 == 0 then
+
+       exit loop
+
+       end if
+
+       end loop
+       
+       if s0 == 1 then
+
+       tempo = 0
+       state = releasestart
+
+       end if
+
+       while s0 == 0 loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if s0 == 1 & tempo < 500 then
+
+       tempo = 0
+       state = L
+
+       end if
+
+       end loop
+
+       end block
+       
+L : block
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str13)
+       state = releasestart
+
+       end block
+       
+W : block
+
+       while s0 == 1  loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if tempo > 1_500 then
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str24)
+
+       exit loop
+
+       elsif s0 == 0 then
+
+       exit loop
+
+       end if
+
+       end loop
+       
+       if s0 == 1 then
+
+       tempo = 0
+       state = releasestart
+
+       end if
+
+       while s0 == 0 loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if s0 == 1 & tempo > 500 then
+
+       tempo = 0
+       state = J
+
+       elsif s0 == 1 & tempo < 500 then
+
+       tempo = 0
+       state = P
+
+       end if
+
+       end loop
+
+       end block
+       
+P : block
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str17)
+       state = releasestart
+
+       end block
+       
+J : block
+
+       while s0 == 1  loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if tempo > 1_500 then
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str11)
+
+       exit loop
+
+       elsif s0 == 0 then
+
+       exit loop
+
+       end if
+
+       end loop
+       
+       if s0 == 1 then
+
+       tempo = 0
+       state = releasestart
+
+       end if
+
+       while s0 == 0 loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if s0 == 1 & tempo > 500 then
+
+       tempo = 0
+       state = UN
+
+       end if
+
+       end loop
+
+       end block
+       
+UN : block
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str28)
+       state = releasestart
+
+       end block
+       
+T : block
+
+       while s0 == 1  loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if tempo > 1_500 then
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str21)
+
+       exit loop
+
+       elsif s0 == 0 then
+
+       exit loop
+
+       end if
+
+       end loop
+
+       if s0 == 1 then
+
+       tempo = 0
+       state = releasestart
+
+       end if
+
+       while s0 == 0 loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if s0 == 1 & tempo > 500 then
+
+       tempo = 0
+       state = M
+
+       elsif s0 == 1 & tempo < 500 then
+
+       tempo = 0
+       state = N
+
+       end if
+
+       end loop
+
+       end block
+       
+N : block
+
+       while s0 == 1  loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if tempo > 1_500 then
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str15)
+
+       exit loop
+
+       elsif s0 == 0 then
+
+       exit loop
+
+       end if
+
+       end loop
+
+       if s0 == 1 then
+
+       tempo = 0
+       state = releasestart
+
+       end if
+
+       while s0 == 0 loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if s0 == 1 & tempo > 500 then
+
+       tempo = 0
+       state = K
+
+       elsif s0 == 1 & tempo < 500 then
+
+       tempo = 0
+       state = D
+
+       end if
+
+       end loop
+
+       end block
+
+D : block
+
+       while s0 == 1  loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if tempo > 1_500 then
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str5)
+
+       exit loop
+
+       elsif s0 == 0 then
+
+       exit loop
+
+       end if
+
+       end loop
+
+       if s0 == 1 then
+
+       tempo = 0
+       state = releasestart
+
+       end if
+
+       while s0 == 0 loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if s0 == 1 & tempo > 500 then
+
+       tempo = 0
+       state = X
+
+       elsif s0 == 1 & tempo < 500 then
+
+       tempo = 0
+       state = B
+
+       end if
+
+       end loop
+
+       end block
+       
+B : block
+
+       while s0 == 1  loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if tempo > 1_500 then
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str3)
+
+       exit loop
+
+       elsif s0 == 0 then
+
+       exit loop
+
+       end if
+
+       end loop
+
+       if s0 == 1 then
+
+       tempo = 0
+       state = releasestart
+
+       end if
+
+       while s0 == 0 loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if s0 == 1 & tempo < 500 then
+
+       tempo = 0
+       state = SIX
+
+       end if
+
+       end loop
+
+       end block
+       
+SIX : block
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str33)
+       state = releasestart
+
+       end block
+       
+X : block
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str25)
+       state = releasestart
+
+       end block
+       
+K : block
+
+       while s0 == 1  loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if tempo > 1_500 then
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str12)
+
+       exit loop
+
+       elsif s0 == 0 then
+
+       exit loop
+
+       end if
+
+       end loop
+
+       if s0 == 1 then
+
+       tempo = 0
+       state = releasestart
+
+       end if
+
+       while s0 == 0 loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if s0 == 1 & tempo > 500 then
+
+       tempo = 0
+       state = Y
+
+       elsif s0 == 1 & tempo < 500 then
+
+       tempo = 0
+       state = C
+
+       end if
+
+       end loop
+
+       end block
+       
+C : block
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str4)
+       state = releasestart
+
+       end block
+       
+Y : block
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str26)
+       state = releasestart
+
+       end block
+       
+M : block
+
+       while s0 == 1  loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if tempo > 1_500 then
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str14)
+
+       exit loop
+
+       elsif s0 == 0 then
+
+       exit loop
+
+       end if
+
+       end loop
+
+       if s0 == 1 then
+
+       tempo = 0
+       state = releasestart
+
+       end if
+
+       while s0 == 0 loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if s0 == 1 & tempo > 500 then
+
+       tempo = 0
+       state = O
+
+       elsif s0 == 1 & tempo < 500 then
+
+       tempo = 0
+       state = G
+
+       end if
+
+       end loop
+
+       end block
+       
+G : block
+
+       while s0 == 1  loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if tempo > 1_500 then
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str8)
+
+       exit loop
+
+       elsif s0 == 0 then
+
+       exit loop
+
+       end if
+
+       end loop
+
+       if s0 == 1 then
+
+       tempo = 0
+       state = releasestart
+
+       end if
+
+       while s0 == 0 loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if s0 == 1 & tempo > 500 then
+
+       tempo = 0
+       state = Q
+
+       elsif s0 == 1 & tempo < 500 then
+
+       tempo = 0
+       state = Z
+
+       end if
+
+       end loop
+
+       end block
+       
+Z : block
+
+       while s0 == 1  loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if tempo > 1_500 then
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str27)
+
+       exit loop
+
+       elsif s0 == 0 then
+
+       exit loop
+
+       end if
+
+       end loop
+
+       if s0 == 1 then
+
+       tempo = 0
+       state = releasestart
+
+       end if
+
+       while s0 == 0 loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if s0 == 1 & tempo < 500 then
+
+       tempo = 0
+       state = SEPT
+
+       end if
+
+       end loop
+
+       end block
+       
+SEPT : block
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str34)
+       state = releasestart
+
+       end block
+       
+
+Q : block
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str18)
+       state = releasestart
+
+       end block
+       
+O : block
+
+       while s0 == 1  loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if tempo > 1_500 then
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str16)
+
+       exit loop
+
+       elsif s0 == 0 then
+
+       exit loop
+
+       end if
+
+       end loop
+
+       if s0 == 1 then
+
+       tempo = 0
+       state = releasestart
+
+       end if
+
+       while s0 == 0 loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if s0 == 1 & tempo > 500 then
+
+       tempo = 0
+       state = TRANS
+
+       elsif s0 == 1 & tempo < 500 then
+
+       tempo = 0
+       state = HUIT
+
+       end if
+
+       end loop
+
+       end block
+
+HUIT : block
+
+       while s0 == 1 loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if s0 == 1 & tempo < 500 then
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str35)
+
+       exit loop
+
+       elsif tempo > 1_500 then
+
+       exit loop
+
+       end if
+
+       end loop
+
+       state = releasestart
+
+       end block
+       
+TRANS : block
+
+       while s0 == 1  loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if tempo > 1_500 then
+
+       exit loop
+
+       elsif s0 == 0 then
+
+       exit loop
+
+       end if
+
+       end loop
+
+       if s0 == 1 then
+
+       tempo = 0
+       state = releasestart
+
+       end if
+
+       while s0 == 0 loop
+
+       delay_1ms (1)
+       tempo = tempo + 1
+
+       if s0 == 1 & tempo > 500 then
+
+       tempo = 0
+       state = ZERO
+
+       elsif s0 == 1 & tempo < 500 then
+
+       tempo = 0
+       state = NEUF
+
+       end if
+
+       end loop
+
+       end block
+       
+NEUF : block
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str36)
+       state = releasestart
+
+       end block
+       
+ZERO : block
+
+       lcd_cursor_position(0,MEM)
+       print_string(lcd, str37)
+       state = releasestart
+
+       end block
+       
+
+
+end case
+
+end loop
